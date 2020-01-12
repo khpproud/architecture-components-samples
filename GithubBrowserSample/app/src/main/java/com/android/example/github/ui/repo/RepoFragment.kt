@@ -20,6 +20,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.doOnPreDraw
 import androidx.databinding.DataBindingComponent
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
@@ -96,9 +97,8 @@ class RepoFragment : Fragment(), Injectable {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val params = RepoFragmentArgs.fromBundle(arguments!!)
         repoViewModel.setId(params.owner, params.name)
-        binding.setLifecycleOwner(viewLifecycleOwner)
+        binding.lifecycleOwner = viewLifecycleOwner
         binding.repo = repoViewModel.repo
 
         val adapter = ContributorAdapter(dataBindingComponent, appExecutors) {
@@ -114,11 +114,9 @@ class RepoFragment : Fragment(), Injectable {
         this.adapter = adapter
         binding.contributorList.adapter = adapter
         postponeEnterTransition()
-        binding.contributorList.getViewTreeObserver()
-                .addOnPreDrawListener {
-                    startPostponedEnterTransition()
-                    true
-                }
+        binding.contributorList.doOnPreDraw {
+            startPostponedEnterTransition()
+        }
         initContributorList(repoViewModel)
     }
 
