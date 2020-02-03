@@ -31,6 +31,13 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation":
+                                     "$projectDir/schemas".toString()]
+            }
+        }
     }
 
     buildTypes {
@@ -56,11 +63,10 @@ android {
 }
 
 dependencies {
-    // Support libraries
-    implementation deps.support.app_compat
-    implementation deps.support.fragment_runtime
-    implementation deps.support.design
-    implementation deps.support.cardview
+    implementation deps.app_compat
+    implementation deps.fragment.runtime
+    implementation deps.material
+    implementation deps.cardview
 
     // Architecture components
     implementation deps.lifecycle.runtime
@@ -70,6 +76,7 @@ dependencies {
 
     // Android Testing Support Library's runner and rules
     androidTestImplementation deps.atsl.core
+    androidTestImplementation deps.atsl.ext_junit
     androidTestImplementation deps.atsl.runner
     androidTestImplementation deps.atsl.rules
     androidTestImplementation deps.room.testing
@@ -81,7 +88,7 @@ dependencies {
     androidTestImplementation deps.espresso.intents
 
     // Resolve conflicts between main and test APK:
-    androidTestImplementation deps.support.annotations
-    androidTestImplementation deps.support.app_compat
-    androidTestImplementation deps.support.design
+    androidTestImplementation deps.annotations
+    androidTestImplementation deps.app_compat
+    androidTestImplementation deps.material
 }
