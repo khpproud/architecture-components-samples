@@ -64,21 +64,18 @@ public class ProductFragment extends Fragment {
         final ProductViewModel model = new ViewModelProvider(this, factory)
                 .get(ProductViewModel.class);
 
+        mBinding.setLifecycleOwner(getViewLifecycleOwner());
         mBinding.setProductViewModel(model);
 
         subscribeToModel(model);
     }
 
     private void subscribeToModel(final ProductViewModel model) {
-
-        // Observe product data
-        model.getObservableProduct().observe(getViewLifecycleOwner(), model::setProduct);
-
         // Observe comments
         model.getComments().observe(getViewLifecycleOwner(), commentEntities -> {
             if (commentEntities != null) {
                 mBinding.setIsLoading(false);
-                mCommentAdapter.setCommentList(commentEntities);
+                mCommentAdapter.submitList(commentEntities);
             } else {
                 mBinding.setIsLoading(true);
             }

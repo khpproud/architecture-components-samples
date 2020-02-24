@@ -21,7 +21,6 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.databinding.ObservableField;
 import androidx.annotation.NonNull;
 
 import com.example.android.persistence.BasicApp;
@@ -34,8 +33,6 @@ import java.util.List;
 public class ProductViewModel extends AndroidViewModel {
 
     private final LiveData<ProductEntity> mObservableProduct;
-
-    public ObservableField<ProductEntity> product = new ObservableField<>();
 
     private final int mProductId;
 
@@ -57,12 +54,8 @@ public class ProductViewModel extends AndroidViewModel {
         return mObservableComments;
     }
 
-    public LiveData<ProductEntity> getObservableProduct() {
+    public LiveData<ProductEntity> getProduct() {
         return mObservableProduct;
-    }
-
-    public void setProduct(ProductEntity product) {
-        this.product.set(product);
     }
 
     /**

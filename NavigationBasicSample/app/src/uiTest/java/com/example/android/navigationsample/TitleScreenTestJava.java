@@ -16,19 +16,22 @@
 
 package com.example.android.navigationsample;
 
+import androidx.fragment.app.testing.FragmentScenario;
+import androidx.navigation.NavBackStackEntry;
+import androidx.navigation.Navigation;
+import androidx.navigation.testing.TestNavHostController;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import androidx.fragment.app.testing.FragmentScenario;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
+import java.util.List;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static com.google.common.truth.Truth.assertThat;
 
 /**
  * A simple test class that can be run both on device (or emulator) or on the host (as a JVM test
@@ -38,10 +41,12 @@ import static org.mockito.Mockito.verify;
 public class TitleScreenTestJava {
 
     @Test
-    public void testNavigationToInGameScreen() {
+    public void testNavigateToPlay() {
 
-        // Create a mock NavController
-        NavController mockNavController = mock(NavController.class);
+        // Create a TestNavHostController
+        TestNavHostController navController = new TestNavHostController(
+                ApplicationProvider.getApplicationContext());
+        navController.setGraph(R.navigation.navigation);
 
         // Create a graphical FragmentScenario for the TitleScreen
         FragmentScenario<TitleScreen> titleScenario =
@@ -49,11 +54,35 @@ public class TitleScreenTestJava {
 
         // Set the NavController property on the fragment
         titleScenario.onFragment(fragment ->
-                Navigation.setViewNavController(fragment.requireView(), mockNavController)
+                Navigation.setViewNavController(fragment.requireView(), navController)
         );
 
-        // Verify that performing a click prompts the correct Navigation action
+        // Verify that performing a click changes the NavController's state
         onView(withId(R.id.play_btn)).perform(click());
-        verify(mockNavController).navigate(R.id.action_title_screen_to_register);
+        List<NavBackStackEntry> backStack = navController.getBackStack();
+        NavBackStackEntry currentDestination = backStack.get(backStack.size() - 1);
+        assertThat(currentDestination.getDestination().getId()).isEqualTo(R.id.register);
+    }
+
+    @Test
+    public void testNavigateToLeaderboard() {
+        // Create a TestNavHostController
+        TestNavHostController navController = new TestNavHostController(ApplicationProvider.getApplicationContext());
+        navController.setGraph(R.navigation.navigation);
+
+        // Create a graphical FragmentScenario for the TitleScreen
+        FragmentScenario<TitleScreen> titleScenario =
+                FragmentScenario.launchInContainer(TitleScreen.class);
+
+        // Set the NavController property on the fragment
+        titleScenario.onFragment(fragment ->
+                Navigation.setViewNavController(fragment.requireView(), navController)
+        );
+
+        // Verify that performing a click changes the NavController's state
+        onView(withId(R.id.leaderboard_btn)).perform(click());
+        List<NavBackStackEntry> backStack = navController.getBackStack();
+        NavBackStackEntry currentDestination = backStack.get(backStack.size() - 1);
+        assertThat(currentDestination.getDestination().getId()).isEqualTo(R.id.leaderboard);
     }
 }
