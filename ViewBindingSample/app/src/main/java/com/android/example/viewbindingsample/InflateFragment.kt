@@ -17,6 +17,7 @@
 package com.android.example.viewbindingsample
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,25 +28,40 @@ import com.android.example.viewbindingsample.databinding.FragmentBlankBinding
  * View Binding example with a fragment that uses the traditional constructor and [onCreateView] for
  * inflation.
  */
-class InflateFragment : Fragment() {
+class InflateFragment : Fragment(),
+        ViewBindingHolder<FragmentBlankBinding> by ViewBindingHolderImpl() {
 
-    // Scoped to the lifecycle of the fragment's view (between onCreateView and onDestroyView)
-    private var fragmentBlankBinding: FragmentBlankBinding? = null
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        val binding = FragmentBlankBinding.inflate(inflater, container, false)
-        fragmentBlankBinding = binding
-        binding.textViewFragment.text = getString(R.string.hello_from_vb_inflatefragment)
-        return binding.root
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return assignBinding(FragmentBlankBinding.inflate(inflater), this) {
+            textViewFragment.text = getString(R.string.hello_from_vb_inflatefragment)
+        }
     }
 
-    override fun onDestroyView() {
-        // Consider not storing the binding instance in a field, if not needed.
-        fragmentBlankBinding = null
-        super.onDestroyView()
+    override fun onDestroy() {
+        // Check for binding object is null!
+        check(binding == null) {
+            "Binding object must be null because of preventing memory leak"
+        }
+        Log.d("Fragment","Binding instance is null: ${binding == null}")
+        super.onDestroy()
     }
 }
+//class InflateFragment : Fragment() {
+//
+//    // Scoped to the lifecycle of the fragment's view (between onCreateView and onDestroyView)
+//    private var fragmentBlankBinding: FragmentBlankBinding? = null
+//
+//    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+//        // Inflate the layout for this fragment
+//        val binding = FragmentBlankBinding.inflate(inflater, container, false)
+//        fragmentBlankBinding = binding
+//        binding.textViewFragment.text = getString(R.string.hello_from_vb_inflatefragment)
+//        return binding.root
+//    }
+//
+//    override fun onDestroyView() {
+//        // Consider not storing the binding instance in a field, if not needed.
+//        fragmentBlankBinding = null
+//        super.onDestroyView()
+//    }
+//}

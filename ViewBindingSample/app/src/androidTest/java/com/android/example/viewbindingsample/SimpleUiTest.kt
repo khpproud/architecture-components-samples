@@ -36,9 +36,9 @@ class SimpleUiTest {
     var activityScenarioRule = ActivityScenarioRule(MainActivity::class.java)
 
     @Test
-    fun activityLaunches() {
+    fun activityLaunched() {
         onView(withText(R.string.hello_from_vb_activity)).check(matches(isDisplayed()))
-        onView(withText(R.string.hello_from_vb_bindfragment)).check(matches(isDisplayed()))
         onView(withText(R.string.hello_from_vb_inflatefragment)).check(matches(isDisplayed()))
+        onView(withText(R.string.hello_from_vb_bindfragment)).check(matches(isDisplayed()))
     }
 }

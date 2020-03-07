@@ -37,7 +37,7 @@ class BindFragment : Fragment(R.layout.fragment_blank) {
         super.onViewCreated(view, savedInstanceState)
         val binding = FragmentBlankBinding.bind(view)
         fragmentBlankBinding = binding
-        binding.textViewFragment.text = getString(string.hello_from_vb_bindfragment)
+        binding.textViewFragment.text = getString(R.string.hello_from_vb_bindfragment)
     }
 
     override fun onDestroyView() {
@@ -46,3 +46,4 @@ class BindFragment : Fragment(R.layout.fragment_blank) {
         super.onDestroyView()
     }
 }
+

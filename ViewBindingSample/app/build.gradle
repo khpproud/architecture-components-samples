@@ -48,6 +48,7 @@ dependencies {
     implementation deps.lifecycle.viewmodel_ktx
     implementation deps.lifecycle.livedata_ktx
     implementation deps.activity.activity_ktx
+    implementation deps.fragment.runtime_ktx
 
     implementation deps.kotlin.stdlib
 
