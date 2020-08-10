@@ -16,17 +16,28 @@
 
 package com.example.background.workers
 
+import android.R.drawable
+import android.annotation.TargetApi
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
 import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.VisibleForTesting
+import androidx.core.app.NotificationCompat.Builder
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.example.background.Constants
+import com.example.background.library.R
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -37,39 +48,13 @@ import java.util.UUID
 abstract class BaseFilterWorker(context: Context, parameters: WorkerParameters) :
     CoroutineWorker(context, parameters) {
 
-    companion object {
-        const val TAG = "BaseFilterWorker"
-        const val ASSET_PREFIX = "file:///android_asset/"
-
-        /**
-         * Creates an input stream which can be used to read the given `resourceUri`.
-         *
-         * @param context the application [Context].
-         * @param resourceUri the [String] resourceUri.
-         * @return the [InputStream] for the resourceUri.
-         */
-        @VisibleForTesting
-        fun inputStreamFor(
-            context: Context,
-            resourceUri: String
-        ): InputStream? {
-
-            // If the resourceUri is an Android asset URI, then use AssetManager to get a handle to
-            // the input stream. (Stock Images are Asset URIs).
-            return if (resourceUri.startsWith(ASSET_PREFIX)) {
-                val assetManager = context.resources.assets
-                assetManager.open(resourceUri.substring(ASSET_PREFIX.length))
-            } else {
-                // Not an Android asset Uri. Use a ContentResolver to get a handle to the input stream.
-                val resolver = context.contentResolver
-                resolver.openInputStream(Uri.parse(resourceUri))
-            }
-        }
-    }
+    private val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     override suspend fun doWork(): Result {
         val resourceUri = inputData.getString(Constants.KEY_IMAGE_URI)
         try {
+            setForeground(createForegroundInfo())
             if (TextUtils.isEmpty(resourceUri)) {
                 Log.e(TAG, "Invalid input uri")
                 throw IllegalArgumentException("Invalid input uri")
@@ -106,7 +91,7 @@ abstract class BaseFilterWorker(context: Context, parameters: WorkerParameters) 
 
         // Bitmaps are being written to a temporary directory. This is so they can serve as inputs
         // for workers downstream, via Worker chaining.
-        val name = String.format("filter-output-%s.png", UUID.randomUUID().toString())
+        val name = "filter-output-${UUID.randomUUID()}.png"
         val outputDir = File(applicationContext.filesDir, Constants.OUTPUT_PATH)
         if (!outputDir.exists()) {
             outputDir.mkdirs() // should succeed
@@ -125,5 +110,85 @@ abstract class BaseFilterWorker(context: Context, parameters: WorkerParameters) 
             }
         }
         return Uri.fromFile(outputFile)
+    }
+
+    /**
+     * Create ForegroundInfo required to run a Worker in a foreground service.
+     */
+    private fun createForegroundInfo(): ForegroundInfo {
+        // For a real world app you might want to use a different id for each Notification.
+        val notificationId = 1
+        return ForegroundInfo(notificationId, createNotification())
+    }
+
+    /**
+     * Create the notification and required channel (O+) for running work in a foreground service.
+     */
+    private fun createNotification(): Notification {
+        val context = applicationContext
+        val channelId = context.getString(R.string.notification_channel_id)
+        val title = context.getString(R.string.notification_title)
+        val cancel = context.getString(R.string.cancel_processing)
+        val name = context.getString(R.string.channel_name)
+        // This PendingIntent can be used to cancel the Worker.
+        val intent = WorkManager.getInstance(applicationContext).createCancelPendingIntent(id)
+
+        val builder = Builder(context, channelId)
+            .setContentTitle(title)
+            .setTicker(title)
+            .setSmallIcon(R.drawable.baseline_gradient)
+            .setOngoing(true)
+            .addAction(drawable.ic_delete, cancel, intent)
+        if (VERSION.SDK_INT >= VERSION_CODES.O) {
+            createNotificationChannel(channelId, name).also {
+                builder.setChannelId(it.id)
+            }
+        }
+        return builder.build()
+    }
+
+    /**
+     * Create the required notification channel for O+ devices.
+     */
+    @TargetApi(VERSION_CODES.O)
+    private fun createNotificationChannel(
+        channelId: String,
+        name: String
+    ): NotificationChannel {
+        return NotificationChannel(
+            channelId, name, NotificationManager.IMPORTANCE_LOW
+        ).also { channel ->
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    companion object {
+        const val TAG = "BaseFilterWorker"
+        const val ASSET_PREFIX = "file:///android_asset/"
+
+        /**
+         * Creates an input stream which can be used to read the given `resourceUri`.
+         *
+         * @param context the application [Context].
+         * @param resourceUri the [String] resourceUri.
+         * @return the [InputStream] for the resourceUri.
+         */
+        @VisibleForTesting
+        fun inputStreamFor(
+            context: Context,
+            resourceUri: String
+        ): InputStream? {
+
+            // If the resourceUri is an Android asset URI, then use AssetManager to get a handle to
+            // the input stream. (Stock Images are Asset URIs).
+            return if (resourceUri.startsWith(ASSET_PREFIX)) {
+                val assetManager = context.resources.assets
+                assetManager.open(resourceUri.substring(ASSET_PREFIX.length))
+            } else {
+                // Not an Android asset Uri. Use a ContentResolver to get a handle to the input stream.
+                val resolver = context.contentResolver
+                resolver.openInputStream(Uri.parse(resourceUri))
+            }
+        }
     }
 }
